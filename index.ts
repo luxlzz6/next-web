@@ -31,13 +31,18 @@ app.post('/api/v1/chat/completions', async (req, res) => {
 
     // 如果不需要流传输，则获取完整的响应数据
     if (!shouldStream) {
-      let data = await response.json();
-      console.info(`非流式成功： ${url}`);
-      return res.json(data);
+      try {
+        let data = await response.json();
+        console.info(`非流式成功： ${url}`);
+        return res.json(data);
+      } catch (err) {
+        console.error(`非流式处理失败: ${err.message}`);
+        return res.status(502).json({ error: `非流式处理失败: ${err.message}` });
+      }
     }
 
     // 如果需要流传输，则使用 event-stream 来处理响应流
-    console.info(`流式成功： ${url}`);
+    console.info(`流式成功: ${currentUrl}`);
     response.body.pipe(es.split(/\r?\n\r?\n/)).pipe(es.mapSync((data) => {
       if (data) {
         res.write(`${data}\n\n`);
@@ -45,8 +50,14 @@ app.post('/api/v1/chat/completions', async (req, res) => {
     })).on('end', () => {
       res.end();
     }).on('error', (err) => {
-      res.status(502).json({ error: `Stream processing failed: ${err.message}` });
+
+      // Instead of setting response status, send error message back to client.
+      console.error(`流式失败: ${err.message}`);
+      res.status(502).json({ error: `流式失败: ${err.message}` });
+      res.end();
+
     });
+
 
   } catch (e) {
     console.error(`请求异常： ${url} - ${e}`);
