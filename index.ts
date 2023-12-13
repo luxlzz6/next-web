@@ -8,7 +8,7 @@ const app = express();
 app.use(bodyParser.json());
 
 // 初始化URL和失败计数器
-const url = "https://chat-gpt-next-web-tandk8600.vercel.app/api/openai/v1/chat/completions";  // 替换为你的URL
+const url = "";  // 替换为你的URL
 let urlFailureCount: Record<string, number> = {};
 urlFailureCount[url] = 0;
 
